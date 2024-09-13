@@ -63,6 +63,20 @@
 	{/if}
 </div>
 
+<!-- let columnPoints = $state({});
+
+	//function to calculate the points for each column
+	function calculateColumnPoints() {
+		columnPoints = {};
+		statuses.forEach((status) => {
+			const statusTasks = tasks.filter((task) => task.status === status);
+			//	console.log(statusTasks, 'statusTask');
+
+			columnPoints[status] = statusTasks.reduce((sum, task) => sum + task.points, 0);
+		});
+	}
+	 -->
+
 <style>
 	/* .form-group {
 		margin-bottom: 1rem;
@@ -79,4 +93,4 @@
 		padding: 0.5rem;
 		font-size: 1rem;
 	} */
-</style>
+</!-->
