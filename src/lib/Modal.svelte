@@ -1,6 +1,7 @@
 <script>
 	import FaWindowClose from 'svelte-icons/fa/FaWindowClose.svelte';
 	export let showModal; // boolean
+	export let isEditing; // boolean
 	let dialog; // HTMLDialogElement
 
 	$: if (dialog && showModal) dialog.showModal();
@@ -13,7 +14,7 @@
 <dialog
 	class="bg-gray-800 text-white"
 	bind:this={dialog}
-	on:close={() => (showModal = false)}
+	on:close={() => ((showModal = false), (isEditing = ''))}
 	on:click|self={() => dialog.close()}
 >
 	<!-- svelte-ignore a11y_no_static_element_interactions -->

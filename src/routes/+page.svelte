@@ -9,10 +9,11 @@
 
 	//let done = $derived(todos.filter((t) => t.checked).length);
 	let showModal = $state(false);
+	let isEditing = $state('');
 	let inputText = $state('');
 	let tasks: Card[] = $state([]);
 
-	$inspect('tasks here', showModal);
+	//$inspect('tasks here', tasks);
 	function addTodo(event) {
 		if (!inputText) return;
 		event.preventDefault();
@@ -27,28 +28,7 @@
 			try {
 				const querySnapshot = await getDocs(q);
 				querySnapshot.forEach((doc) => {
-					const createdAtTimestamp = doc.data().createdAt; // Get the Timestamp object
-					console.log(createdAtTimestamp);
-
-					const createdAtDate = createdAtTimestamp.toDate(); // Convert to Date object
-					console.log(createdAtDate);
-
-					const formattedDate = createdAtDate.toLocaleDateString('en-US', {
-						year: 'numeric',
-
-						month: 'long',
-
-						day: 'numeric',
-
-						hour: 'numeric',
-
-						minute: 'numeric',
-
-						second: 'numeric'
-					});
-					console.log(formattedDate);
-
-					tasks.push({ id: doc.id, ...doc.data(), createdAt: formattedDate });
+					tasks.push({ id: doc.id, ...doc.data() });
 				});
 			} catch (error) {
 				console.log(error);
@@ -60,12 +40,12 @@
 
 <div class="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
 	<Header bind:showModal />
-	<TaskColumns {tasks} bind:showModal />
+	<TaskColumns {tasks} bind:showModal bind:isEditing />
 </div>
 
 {#if showModal}
-	<Modal bind:showModal>
-		<AddTaskForm {tasks} bind:showModal slot="form" />
+	<Modal bind:showModal bind:isEditing>
+		<AddTaskForm {tasks} {isEditing} bind:showModal slot="form" />
 	</Modal>
 {/if}
 

@@ -1,25 +1,12 @@
 <script>
 	import FormFields from './FormFields.svelte';
-	import { addDoc, collection, doc, serverTimestamp } from 'firebase/firestore';
+	import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 	import { db } from './firebase';
 
-	let { tasks = $bindable(), showModal = $bindable() } = $props();
-	// Assuming you have some initial data to bind to your form inputs
-	/* let formData = $state({
-		requestedAt: '',
-		createdAt: Date.now(),
-		finishedAt: '',
-		title: '',
-		description: '',
-		attachments: '',
-		points: '',
-		status: 'regular',
-		statusState: 'pending',
-		assignee: '',
-		assigneeId: '',
-		requestor: '',
-		requestorId: ''
-	}); */
+	let { tasks = $bindable(), showModal = $bindable(), isEditing } = $props();
+	const task = $derived(tasks.find((task) => task.id === isEditing));
+
+	//$inspect('showModal', task);
 
 	let user = { name: 'test', id: 'test' };
 	let formData = $state({
@@ -37,6 +24,11 @@
 		requestor: user.name, //user
 		requestorId: user.id //user
 	});
+	if (isEditing) {
+		formData = { ...task };
+	}
+	//$inspect('isEditing', isEditing);
+
 	let devs = $state([
 		{ name: 'none', id: '0' },
 		{ name: ' Jaji', id: '1' },
@@ -56,34 +48,60 @@
 
 		try {
 			const taskRef = collection(db, 'tasks');
-			const sendDoc = await addDoc(taskRef, formData);
+			if (!isEditing) {
+				//send data to the db and update the frontend
+				const sendDoc = await addDoc(taskRef, formData);
+				tasks.push({ ...formData, createdAt: 'Just Now', id: sendDoc.id });
+				//reset form
+				showModal = false;
+				formData = {
+					requestedAt: '',
+					createdAt: serverTimestamp(),
+					finishedAt: '',
+					title: '',
+					description: '',
+					attachments: '',
+					points: '',
+					status: 'regular',
+					statusState: '',
+					assignee: 'none',
+					assigneeId: '',
+					requestor: user.name,
+					requestorId: user.id
+				};
 
-			tasks.push({ ...formData, createdAt: 'Just Now', id: sendDoc.id });
-
-			showModal = false;
-
-			formData = {
-				requestedAt: '',
-				createdAt: serverTimestamp(),
-				finishedAt: '',
-				title: '',
-				description: '',
-				attachments: '',
-				points: '',
-				status: 'regular',
-				statusState: '',
-				assignee: 'none',
-				assigneeId: '',
-				requestor: user.name,
-				requestorId: user.id
-			};
-
-			console.log('Task submitted successfully');
+				console.log('Task submitted successfully');
+			} else {
+				//update the doc in the db
+				const docRef = doc(db, 'tasks', isEditing);
+				await updateDoc(docRef, formData);
+				//update the task on the frontend to show that it has been updated in db
+				const taskToUpdate = tasks.find((task) => task.id === isEditing);
+				if (taskToUpdate) {
+					Object.assign(taskToUpdate, formData);
+				}
+				//reset
+				showModal = false;
+				formData = {
+					requestedAt: '',
+					createdAt: serverTimestamp(),
+					finishedAt: '',
+					title: '',
+					description: '',
+					attachments: '',
+					points: '',
+					status: 'regular',
+					statusState: '',
+					assignee: 'none',
+					assigneeId: '',
+					requestor: user.name,
+					requestorId: user.id
+				};
+			}
 		} catch (error) {
 			console.error('Error submitting task:', error);
 		}
 	}
-	$inspect('form', showModal);
 </script>
 
 <form onsubmit={handleSubmitTask} class="space-y-8">
@@ -147,7 +165,7 @@
 		<button
 			type="submit"
 			class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-all duration-150"
-			>Submit</button
+			>{!isEditing ? 'Submit' : 'Edit'}</button
 		>
 	</div>
 </form>

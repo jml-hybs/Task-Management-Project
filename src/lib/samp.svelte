@@ -10,14 +10,11 @@
 	const statuses = ['regular', 'pending', 'inProgress', 'finished'];
 
 	// Calculate total points for each status
-	let columnPoints = $state({});
-	$effect(() => {
-		statuses.forEach((status) => {
-			const statusTasks = tasks.filter((task) => task.status === status);
-			columnPoints[status] = statusTasks.reduce((sum, task) => sum + task.points, 0);
-		});
-	});
-	$inspect(columnPoints['finished']);
+	function getTotalPointsForStatus(status) {
+		return tasks
+			.filter((task) => task.status === status)
+			.reduce((sum, task) => sum + task.points, 0);
+	}
 
 	async function updateTaskStatus(taskId, newStatus) {
 		const taskDocRef = doc(db, 'tasks', taskId);
@@ -32,9 +29,12 @@
 	async function handleDrop(event, targetStatus) {
 		event.preventDefault(); // Prevent the browser's default handling of the drop event
 		const draggedItem = JSON.parse(event.dataTransfer.getData('application/json'));
-		//
-		if (targetStatus === 'inProgress' && columnPoints['inProgress'] + draggedItem.points > 100) {
-			alert('Total points exceeded. Please remove cards from In Progress before adding this one.');
+
+		const currentPoints = getTotalPointsForStatus(targetStatus);
+		const newPointsTotal = currentPoints + draggedItem.points;
+
+		if (targetStatus === 'inProgress' && newPointsTotal > 100) {
+			alert('Total points exceeded for inProgress column!');
 			return;
 		}
 
@@ -93,13 +93,9 @@
 			<!-- Status Header -->
 			<div class="p-4 {getStatusBgColor(status)} rounded-lg mb-4">
 				<h2 class="text-lg text-gray-700 font-bold capitalize text-center">
-					{status}
+					{status} - {getTotalPointsForStatus(status)} points
 				</h2>
-				<p class="text-lg text-gray-700 font-bold capitalize text-center">
-					{columnPoints[status]} points
-				</p>
 			</div>
-
 			{#each tasks.filter((item) => item.status === status) as item (item.id)}
 				<!-- Task Card -->
 				<div
